@@ -14,8 +14,10 @@ Cette application web permet de traiter efficacement et rapidement des archives 
 ### 📝 Développeur
 
 **MOA Digital Agency LLC**  
+Développé par Aisance Kalonji  
 Site web: [https://myoneart.com](https://myoneart.com)  
-Contact: [moa@myoneart.com](mailto:moa@myoneart.com)
+Contact: [moa@myoneart.com](mailto:moa@myoneart.com)  
+Copyright © 2025 MOA Digital Agency LLC. Développé par Aisance Kalonji. Tous droits réservés.
 
 ## 🚀 Fonctionnalités principales
 
@@ -218,4 +220,4 @@ Pour toute question ou problème, n'hésitez pas à :
 
 ## 📜 Licence
 
-Ce projet est développé par MOA Digital Agency LLC. Tous droits réservés © 2025.
+Ce projet est développé par MOA Digital Agency LLC. Développé par Aisance Kalonji. Tous droits réservés © 2025.

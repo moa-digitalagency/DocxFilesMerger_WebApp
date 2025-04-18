@@ -1,5 +1,9 @@
 # 📚 DocxFilesMerger - Documentation Complète 🏥
 
+**Développé par MOA Digital Agency LLC (https://myoneart.com)**  
+**Email: moa@myoneart.com**  
+**Copyright © 2025 MOA Digital Agency LLC. Développé par Aisance Kalonji. Tous droits réservés.**
+
 ## 📖 Guide Utilisateur
 
 ### 🚀 Installation et prérequis
@@ -184,9 +188,10 @@ Contactez-nous à moa@myoneart.com pour plus d'informations.
 ## 📞 Contact et support
 
 **MOA Digital Agency LLC**  
+Développé par Aisance Kalonji  
 Site web : [https://myoneart.com](https://myoneart.com)  
 Email : [moa@myoneart.com](mailto:moa@myoneart.com)
 
 ---
 
-*© 2025 MOA Digital Agency LLC. Tous droits réservés.*
+*© 2025 MOA Digital Agency LLC. Développé par Aisance Kalonji. Tous droits réservés.*
