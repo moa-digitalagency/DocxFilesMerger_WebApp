@@ -9,6 +9,12 @@
 /* Admin panel styles */
 .card .table {
   --bs-table-color: white !important;
+  --bs-table-hover-color: white !important;
+  color: white !important;
+}
+
+.card .table tr:hover td,
+.card .table tr:hover th {
   color: white !important;
 }
 
