@@ -219,35 +219,49 @@ def download_file(file_type):
 @app.route('/status')
 def processing_status():
     # Trouver le dossier de statut le plus récent
-    status_folders = [os.path.join(app.config['STATUS_FOLDER'], f) for f in os.listdir(app.config['STATUS_FOLDER'])]
-    if not status_folders:
-        return jsonify({'error': 'Aucun traitement en cours.'})
-    
-    latest_folder = max(status_folders, key=os.path.getmtime)
-    status_file = os.path.join(latest_folder, 'status.json')
-    
-    if not os.path.exists(status_file):
-        return jsonify({'error': 'Fichier de statut introuvable.'})
-    
     try:
-        with open(status_file, 'r') as f:
-            status_data = json.load(f)
+        status_folders = [os.path.join(app.config['STATUS_FOLDER'], f) for f in os.listdir(app.config['STATUS_FOLDER'])]
+        if not status_folders:
+            return jsonify({'error': 'Aucun traitement en cours.'})
         
-        # Ajouter des statistiques si le traitement est terminé
-        if status_data.get('complete', False):
-            start_time = status_data.get('start_time', 0)
-            end_time = status_data.get('end_time', int(time.time()))
-            processing_time = end_time - start_time
+        latest_folder = max(status_folders, key=os.path.getmtime)
+        status_file = os.path.join(latest_folder, 'status.json')
+        
+        if not os.path.exists(status_file):
+            return jsonify({'error': 'Fichier de statut introuvable.'})
+        
+        try:
+            with open(status_file, 'r') as f:
+                status_data = json.load(f)
             
-            status_data['stats'] = {
-                'processing_time': processing_time,
-                'file_count': status_data.get('file_count', 0)
-            }
-        
-        return jsonify(status_data)
-        
-    except Exception as e:
-        return jsonify({'error': f'Erreur lors de la lecture du statut: {str(e)}'})
+            # Ajouter des statistiques si le traitement est terminé
+            if status_data.get('complete', False):
+                start_time = status_data.get('start_time', 0)
+                end_time = status_data.get('end_time', int(time.time()))
+                processing_time = end_time - start_time
+                
+                status_data['stats'] = {
+                    'processing_time': processing_time,
+                    'file_count': status_data.get('file_count', 0)
+                }
+            
+            # Pour les journaux de débogage
+            print(f"Status file content: {json.dumps(status_data, indent=2)}")
+            
+            # Si un état d'erreur est détecté, ajoutez plus de détails pour faciliter le débogage
+            if status_data.get('current_step') == 'error':
+                error_msg = status_data.get('error', 'Erreur inconnue')
+                traceback_info = status_data.get('traceback', '')
+                print(f"Erreur détectée: {error_msg}")
+                if traceback_info:
+                    print(f"Traceback: {traceback_info}")
+            
+            return jsonify(status_data)
+            
+        except Exception as e:
+            return jsonify({'error': f'Erreur lors de la lecture du statut: {str(e)}'})
+    except Exception as outer_e:
+        return jsonify({'error': f'Erreur lors de la récupération du statut: {str(outer_e)}'})
 
 # Afficher le README
 @app.route('/readme')

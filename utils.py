@@ -68,64 +68,125 @@ def convert_doc_to_docx(doc_path, output_dir):
     """
     Convert a .doc file to .docx format
     
-    This function attempts to use LibreOffice for conversion if available,
-    falling back to a basic document creation method if not
+    This function tries multiple methods to convert .doc to .docx:
+    1. python-docx direct loading (works for some .docx disguised as .doc)
+    2. LibreOffice conversion (if available)
+    3. Antiword for extracting text content (for old .doc files)
+    4. Creating a placeholder document if all else fails
     """
+    filename = os.path.basename(doc_path)
+    name_without_ext = os.path.splitext(filename)[0]
+    docx_path = os.path.join(output_dir, f"{name_without_ext}.docx")
+    
+    # Méthode 1: Tentative directe avec python-docx (fonctionne pour certains .doc)
     try:
-        # Créer une instance de Document pour vérifier le chargement
         document = Document(doc_path)
-        
-        # Si ça fonctionne, simplement sauvegarder en .docx
-        filename = os.path.basename(doc_path)
-        name_without_ext = os.path.splitext(filename)[0]
-        docx_path = os.path.join(output_dir, f"{name_without_ext}.docx")
-        
         document.save(docx_path)
+        print(f"Conversion réussie de {doc_path} en utilisant python-docx directement")
         return docx_path
         
     except Exception as e:
         print(f"Échec de la conversion directe de {doc_path}: {str(e)}")
+    
+    # Méthode 2: Essayer avec LibreOffice
+    try:
+        cmd = ['libreoffice', '--headless', '--convert-to', 'docx', 
+               '--outdir', output_dir, doc_path]
         
-        try:
-            # Essayer de convertir avec LibreOffice si disponible
-            # LibreOffice doit être installé sur le système
-            filename = os.path.basename(doc_path)
-            name_without_ext = os.path.splitext(filename)[0]
-            docx_path = os.path.join(output_dir, f"{name_without_ext}.docx")
+        subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
+        
+        # Vérifier si le fichier a bien été créé
+        if os.path.exists(docx_path):
+            print(f"Conversion réussie de {doc_path} en utilisant LibreOffice")
+            return docx_path
+        
+    except (subprocess.SubprocessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
+        print(f"Échec de la conversion via LibreOffice: {str(e)}")
+    
+    # Méthode 3: Utiliser antiword pour extraire le texte (pour les vieux .doc)
+    try:
+        # Créer un fichier texte temporaire
+        temp_txt = os.path.join(output_dir, f"{name_without_ext}.txt")
+        
+        cmd = ['antiword', doc_path]
+        with open(temp_txt, 'w') as f:
+            subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE, check=True, timeout=30)
+        
+        # Créer un nouveau document DOCX à partir du texte extrait
+        if os.path.exists(temp_txt) and os.path.getsize(temp_txt) > 0:
+            doc = Document()
             
-            cmd = ['libreoffice', '--headless', '--convert-to', 'docx', 
-                   '--outdir', output_dir, doc_path]
+            # Ajouter le titre avec le nom du fichier
+            doc.add_heading(f"Document: {filename}", level=1)
             
-            subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            # Lire le contenu du fichier texte
+            with open(temp_txt, 'r') as f:
+                for line in f:
+                    if line.strip():  # Ignorer les lignes vides
+                        doc.add_paragraph(line.strip())
             
-            # Vérifier si le fichier a bien été créé
-            if os.path.exists(docx_path):
-                return docx_path
+            # Sauvegarder le document
+            doc.save(docx_path)
             
-        except (subprocess.SubprocessError, FileNotFoundError) as e:
-            print(f"Échec de la conversion via LibreOffice: {str(e)}")
+            # Supprimer le fichier texte temporaire
+            os.remove(temp_txt)
             
-            try:
-                # Si tout échoue, créer un nouveau document avec le contenu
-                import docx2pdf
-                print("Tentative de conversion avec docx2pdf...")
-                
-                # Obtenir le chemin de sortie
-                filename = os.path.basename(doc_path)
-                name_without_ext = os.path.splitext(filename)[0]
-                docx_path = os.path.join(output_dir, f"{name_without_ext}.docx")
-                
-                # Créer un document vierge avec un message
-                doc = Document()
-                doc.add_paragraph(f"Le fichier {filename} n'a pas pu être converti automatiquement.")
-                doc.add_paragraph("Veuillez consulter le fichier original.")
-                doc.save(docx_path)
-                
-                return docx_path
-                
-            except Exception as inner_e:
-                print(f"Échec de la création d'un document de remplacement: {str(inner_e)}")
-                return None
+            print(f"Conversion réussie de {doc_path} en utilisant antiword")
+            return docx_path
+    
+    except (subprocess.SubprocessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
+        print(f"Échec de la conversion via antiword: {str(e)}")
+        
+    # Méthode 3b: Utiliser catdoc comme alternative à antiword
+    try:
+        # Créer un fichier texte temporaire
+        temp_txt = os.path.join(output_dir, f"{name_without_ext}_catdoc.txt")
+        
+        cmd = ['catdoc', doc_path]
+        with open(temp_txt, 'w') as f:
+            subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE, check=True, timeout=30)
+        
+        # Créer un nouveau document DOCX à partir du texte extrait
+        if os.path.exists(temp_txt) and os.path.getsize(temp_txt) > 0:
+            doc = Document()
+            
+            # Ajouter le titre avec le nom du fichier
+            doc.add_heading(f"Document: {filename}", level=1)
+            
+            # Lire le contenu du fichier texte
+            with open(temp_txt, 'r') as f:
+                for line in f:
+                    if line.strip():  # Ignorer les lignes vides
+                        doc.add_paragraph(line.strip())
+            
+            # Sauvegarder le document
+            doc.save(docx_path)
+            
+            # Supprimer le fichier texte temporaire
+            os.remove(temp_txt)
+            
+            print(f"Conversion réussie de {doc_path} en utilisant catdoc")
+            return docx_path
+    
+    except (subprocess.SubprocessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
+        print(f"Échec de la conversion via catdoc: {str(e)}")
+    
+    # Méthode 4: Si tout échoue, créer un document de base
+    try:
+        # Créer un document vierge avec un message
+        doc = Document()
+        doc.add_heading(f"Document: {filename}", level=1)
+        doc.add_paragraph(f"Le fichier {filename} n'a pas pu être converti automatiquement.")
+        doc.add_paragraph("Ce document contient un message d'avertissement à la place du contenu original.")
+        doc.add_paragraph("Veuillez consulter le fichier original si nécessaire.")
+        doc.save(docx_path)
+        
+        print(f"Création d'un document de remplacement pour {doc_path}")
+        return docx_path
+            
+    except Exception as inner_e:
+        print(f"Échec de la création d'un document de remplacement: {str(inner_e)}")
+        return None
 
 def merge_docx_files(docx_files, output_path, status_dir):
     """
