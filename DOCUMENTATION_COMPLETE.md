@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Développé par:** MOA Digital Agency LLC (https://myoneart.com)  
 **Email:** moa@myoneart.com  
-**Copyright:** © 2025 MOA Digital Agency LLC. Tous droits réservés.
+**Copyright:** © 2025 MOA Digital Agency LLC. Développé par Aisance Kalonji. Tous droits réservés.
 
 ## 📋 Table des matières
 

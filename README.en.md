@@ -6,7 +6,7 @@
 
 Developed by MOA Digital Agency LLC (https://myoneart.com)  
 Email: moa@myoneart.com  
-Copyright © 2025 MOA Digital Agency LLC. All rights reserved.
+Copyright © 2025 MOA Digital Agency LLC. Developed by Aisance Kalonji. All rights reserved.
 
 ## 📋 Overview
 
