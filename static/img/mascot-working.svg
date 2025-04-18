@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200px" height="200px" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <title>DocBot - Working</title>
+    <g id="mascot-working" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <!-- Corps principal - Dossier -->
+        <rect id="body" fill="#FFC107" x="50" y="60" width="100" height="80" rx="10"></rect>
+        <rect id="folder-tab" fill="#FFC107" x="60" y="50" width="40" height="15" rx="5"></rect>
+        
+        <!-- Yeux -->
+        <circle id="eye-left" fill="#FFFFFF" cx="80" cy="90" r="12"></circle>
+        <circle id="eye-right" fill="#FFFFFF" cx="120" cy="90" r="12"></circle>
+        <circle id="pupil-left" fill="#333333" cx="80" cy="90" r="6"></circle>
+        <circle id="pupil-right" fill="#333333" cx="120" cy="90" r="6"></circle>
+        
+        <!-- Sourcils concentrés -->
+        <rect id="eyebrow-left" fill="#333333" x="70" y="75" width="20" height="5" rx="2" transform="rotate(-15 70 75)"></rect>
+        <rect id="eyebrow-right" fill="#333333" x="110" y="75" width="20" height="5" rx="2" transform="rotate(15 110 75)"></rect>
+        
+        <!-- Bouche (occupée/concentrée) -->
+        <path d="M90,115 C90,120 110,120 110,115" id="mouth" stroke="#333333" stroke-width="3" stroke-linecap="round"></path>
+        
+        <!-- Bras tenant des documents -->
+        <rect id="arm-left" fill="#FFC107" x="30" y="90" width="20" height="10" rx="5"></rect>
+        <rect id="document-left" fill="#FFFFFF" stroke="#CCCCCC" x="15" y="85" width="25" height="30" rx="2"></rect>
+        
+        <rect id="arm-right" fill="#FFC107" x="150" y="90" width="20" height="10" rx="5"></rect>
+        <rect id="document-right" fill="#FFFFFF" stroke="#CCCCCC" x="160" y="85" width="25" height="30" rx="2"></rect>
+        
+        <!-- Gouttes de sueur pour montrer l'effort -->
+        <circle id="sweat-1" fill="#A7D5FF" cx="60" cy="70" r="3"></circle>
+        <circle id="sweat-2" fill="#A7D5FF" cx="140" cy="70" r="4"></circle>
+    </g>
+</svg>

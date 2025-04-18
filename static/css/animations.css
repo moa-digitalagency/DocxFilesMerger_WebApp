@@ -1,0 +1,131 @@
+/* 
+  DocxFilesMerger - Application de traitement et fusion de documents.
+  Développé par MOA Digital Agency LLC (https://myoneart.com)
+  Email: moa@myoneart.com
+  Copyright © 2025 MOA Digital Agency LLC. Tous droits réservés.
+*/
+
+/* Animations pour la mascotte */
+@keyframes jumping {
+    0% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+@keyframes shaking {
+    0% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-5px);
+    }
+    50% {
+        transform: translateX(0);
+    }
+    75% {
+        transform: translateX(5px);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+@keyframes dancing {
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+    25% {
+        transform: rotate(-5deg) scale(1.05);
+    }
+    50% {
+        transform: rotate(0deg) scale(1.1);
+    }
+    75% {
+        transform: rotate(5deg) scale(1.05);
+    }
+    100% {
+        transform: rotate(0deg) scale(1);
+    }
+}
+
+/* Classes pour appliquer les animations */
+.jumping {
+    animation: jumping 1s infinite ease-in-out;
+}
+
+.shaking {
+    animation: shaking 0.5s infinite linear;
+}
+
+.dancing {
+    animation: dancing 1s infinite ease-in-out;
+}
+
+/* Animations pour les autres éléments */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.slide-in-up {
+    animation: slideInUp 0.5s ease-out;
+}
+
+/* Animation pour les messages motivants */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.pulse {
+    animation: pulse 2s infinite ease-in-out;
+}
+
+/* Animation pour les boutons */
+@keyframes buttonGlow {
+    0% {
+        box-shadow: 0 0 5px rgba(var(--bs-primary-rgb), 0.5);
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(var(--bs-primary-rgb), 0.8);
+    }
+    100% {
+        box-shadow: 0 0 5px rgba(var(--bs-primary-rgb), 0.5);
+    }
+}
+
+.btn-glow {
+    animation: buttonGlow 2s infinite ease-in-out;
+}

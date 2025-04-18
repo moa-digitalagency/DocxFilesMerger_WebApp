@@ -80,12 +80,19 @@
                         </div>
                     </div>
                     
-                    <div class="progress-container">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span id="progress-status"></span>
-                            <span id="progress-percentage"></span>
+                    <div class="progress-container" style="display: none;">
+                        <!-- Mascotte animée -->
+                        <div class="text-center my-4">
+                            <img id="upload-mascot" src="{{ url_for('static', filename='img/mascot-working.svg') }}" 
+                                 alt="Mascotte au travail" style="width: 120px; height: 120px;" class="jumping">
+                            <div id="motivation-message" class="mt-2 fw-bold fs-5 text-center text-primary pulse" style="display: none;"></div>
                         </div>
-                        <div class="progress" style="height: 20px;">
+                        
+                        <div class="d-flex justify-content-between mb-1">
+                            <span id="progress-status" class="text-muted"></span>
+                            <span id="progress-percentage" class="badge bg-primary"></span>
+                        </div>
+                        <div class="progress mb-3" style="height: 20px;">
                             <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" 
                                 role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
                             </div>
