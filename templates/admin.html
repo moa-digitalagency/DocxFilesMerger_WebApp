@@ -19,7 +19,7 @@
                         <div class="col-md-4">
                             <div class="card border-0 bg-light mb-3">
                                 <div class="card-body">
-                                    <h6 class="text-muted">Traitements totaux</h6>
+                                    <h6 class="text-dark">Traitements totaux</h6>
                                     <h2 class="fw-bold text-dark">{{ stats.total_jobs }}</h2>
                                 </div>
                             </div>
@@ -27,7 +27,7 @@
                         <div class="col-md-4">
                             <div class="card border-0 bg-light mb-3">
                                 <div class="card-body">
-                                    <h6 class="text-muted">Fichiers traités</h6>
+                                    <h6 class="text-dark">Fichiers traités</h6>
                                     <h2 class="fw-bold text-dark">{{ stats.total_files }}</h2>
                                 </div>
                             </div>
@@ -35,7 +35,7 @@
                         <div class="col-md-4">
                             <div class="card border-0 bg-light mb-3">
                                 <div class="card-body">
-                                    <h6 class="text-muted">Temps moyen</h6>
+                                    <h6 class="text-dark">Temps moyen</h6>
                                     <h2 class="fw-bold text-dark">{{ stats.avg_time }}s</h2>
                                 </div>
                             </div>
@@ -95,15 +95,15 @@
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-hover">
-                            <thead>
+                            <thead class="bg-primary">
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Fichier</th>
-                                    <th>Statut</th>
-                                    <th>Fichiers</th>
-                                    <th>Durée (s)</th>
-                                    <th>Date</th>
-                                    <th>Actions</th>
+                                    <th class="text-white">ID</th>
+                                    <th class="text-white">Fichier</th>
+                                    <th class="text-white">Statut</th>
+                                    <th class="text-white">Fichiers</th>
+                                    <th class="text-white">Durée (s)</th>
+                                    <th class="text-white">Date</th>
+                                    <th class="text-white">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="recent-jobs-table">
@@ -157,7 +157,7 @@
                     </div>
                     
                     {% if not recent_jobs %}
-                    <p id="no-jobs-message" class="text-center text-muted py-3">Aucun traitement récent.</p>
+                    <p id="no-jobs-message" class="text-center text-white py-3">Aucun traitement récent.</p>
                     {% endif %}
                 </div>
             </div>
@@ -172,11 +172,11 @@
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-sm">
-                            <thead>
+                            <thead class="bg-primary">
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Traitements</th>
-                                    <th>Fichiers</th>
+                                    <th class="text-white">Date</th>
+                                    <th class="text-white">Traitements</th>
+                                    <th class="text-white">Fichiers</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -192,7 +192,7 @@
                     </div>
                     
                     {% if not daily_stats %}
-                    <p class="text-center text-muted py-3">Aucune statistique disponible.</p>
+                    <p class="text-center text-white py-3">Aucune statistique disponible.</p>
                     {% endif %}
                 </div>
             </div>
