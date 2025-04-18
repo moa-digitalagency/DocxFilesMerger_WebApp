@@ -124,6 +124,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${job.file_count || 'N/A'}</td>
                 <td>${job.processing_time || 'N/A'}</td>
                 <td>${formattedDate}</td>
+                <td class="text-center">
+                    <div class="btn-group btn-group-sm">
+                        <!-- Télécharger DOCX -->
+                        ${job.status === 'completed' ? 
+                            `<a href="/admin/download_job_file/${job.job_id}/docx" class="btn btn-outline-primary" title="Télécharger DOCX">
+                                <i class="fas fa-file-word"></i>
+                            </a>
+                            <a href="/admin/download_job_file/${job.job_id}/pdf" class="btn btn-outline-danger" title="Télécharger PDF">
+                                <i class="fas fa-file-pdf"></i>
+                            </a>` :
+                            `<button class="btn btn-outline-primary disabled" title="Fichier non disponible">
+                                <i class="fas fa-file-word"></i>
+                            </button>
+                            <button class="btn btn-outline-danger disabled" title="Fichier non disponible">
+                                <i class="fas fa-file-pdf"></i>
+                            </button>`
+                        }
+                        <!-- Supprimer -->
+                        <a href="/admin/delete_job/${job.id}" class="btn btn-outline-danger" 
+                           onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce traitement?');" title="Supprimer">
+                            <i class="fas fa-trash-alt"></i>
+                        </a>
+                    </div>
+                </td>
             `;
             
             // Ajouter la ligne au tableau
