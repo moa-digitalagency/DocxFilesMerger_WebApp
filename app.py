@@ -436,6 +436,44 @@ def admin_refresh_stats():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# Route pour supprimer un traitement spécifique
+@app.route('/admin/delete_job/<int:job_id>')
+@admin_required
+def delete_job(job_id):
+    """Supprimer un traitement spécifique"""
+    try:
+        # Trouver le job par ID
+        job = ProcessingJob.query.get(job_id)
+        if not job:
+            flash("Traitement introuvable.", "danger")
+            return redirect(url_for('admin_dashboard'))
+        
+        # Essayer de supprimer les fichiers associés
+        try:
+            # Trouver les dossiers associés
+            job_folder_id = job.job_id
+            upload_folder = os.path.join(app.config['UPLOAD_FOLDER'], job_folder_id)
+            output_folder = os.path.join(app.config['OUTPUT_FOLDER'], job_folder_id)
+            status_folder = os.path.join(app.config['STATUS_FOLDER'], job_folder_id)
+            
+            # Supprimer les dossiers s'ils existent
+            for folder in [upload_folder, output_folder, status_folder]:
+                if os.path.exists(folder):
+                    shutil.rmtree(folder)
+        except Exception as file_error:
+            print(f"Erreur lors de la suppression des fichiers: {str(file_error)}")
+            # Continue même si les fichiers ne peuvent pas être supprimés
+        
+        # Supprimer le job de la base de données
+        db.session.delete(job)
+        db.session.commit()
+        
+        # Rediriger vers le tableau de bord admin
+        return redirect(url_for('admin_dashboard'))
+    except Exception as e:
+        return render_template('error.html', error_code=500, 
+                              error_message=f"Erreur lors de la suppression du traitement: {str(e)}"), 500
+
 # Route pour supprimer l'historique des traitements
 @app.route('/admin/clear_history')
 @admin_required
@@ -451,6 +489,43 @@ def clear_history():
     except Exception as e:
         return render_template('error.html', error_code=500, 
                               error_message=f"Erreur lors de la suppression de l'historique: {str(e)}"), 500
+
+# Route pour télécharger les fichiers d'un job spécifique
+@app.route('/admin/download_job_file/<job_id>/<file_type>')
+@admin_required
+def download_job_file(job_id, file_type):
+    """Télécharger un fichier spécifique d'un traitement"""
+    try:
+        # Vérifier le type de fichier
+        if file_type not in ['docx', 'pdf']:
+            abort(404)
+        
+        # Construire le chemin du fichier
+        output_folder = os.path.join(app.config['OUTPUT_FOLDER'], job_id)
+        
+        # Vérifier si le dossier existe
+        if not os.path.exists(output_folder):
+            return render_template('error.html', error_code=404, 
+                                  error_message="Dossier de sortie introuvable."), 404
+        
+        # Déterminer le chemin du fichier à télécharger
+        if file_type == 'docx':
+            file_path = os.path.join(output_folder, 'merged.docx')
+            filename = 'documents_fusionnes.docx'
+        else:
+            file_path = os.path.join(output_folder, 'merged.pdf')
+            filename = 'documents_fusionnes.pdf'
+        
+        # Vérifier si le fichier existe
+        if not os.path.exists(file_path):
+            return render_template('error.html', error_code=404, 
+                                  error_message=f"Le fichier {file_type} demandé n'est pas disponible."), 404
+        
+        # Envoyer le fichier
+        return send_file(file_path, as_attachment=True, download_name=filename)
+    except Exception as e:
+        return render_template('error.html', error_code=500, 
+                              error_message=f"Erreur lors du téléchargement du fichier: {str(e)}"), 500
 
 # Interface d'administration
 @app.route('/admin')

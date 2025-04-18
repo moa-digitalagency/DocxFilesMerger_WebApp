@@ -20,7 +20,7 @@
                             <div class="card border-0 bg-light mb-3">
                                 <div class="card-body">
                                     <h6 class="text-muted">Traitements totaux</h6>
-                                    <h2 class="fw-bold">{{ stats.total_jobs }}</h2>
+                                    <h2 class="fw-bold text-dark">{{ stats.total_jobs }}</h2>
                                 </div>
                             </div>
                         </div>
@@ -28,7 +28,7 @@
                             <div class="card border-0 bg-light mb-3">
                                 <div class="card-body">
                                     <h6 class="text-muted">Fichiers traités</h6>
-                                    <h2 class="fw-bold">{{ stats.total_files }}</h2>
+                                    <h2 class="fw-bold text-dark">{{ stats.total_files }}</h2>
                                 </div>
                             </div>
                         </div>
@@ -36,7 +36,7 @@
                             <div class="card border-0 bg-light mb-3">
                                 <div class="card-body">
                                     <h6 class="text-muted">Temps moyen</h6>
-                                    <h2 class="fw-bold">{{ stats.avg_time }}s</h2>
+                                    <h2 class="fw-bold text-dark">{{ stats.avg_time }}s</h2>
                                 </div>
                             </div>
                         </div>
@@ -103,6 +103,7 @@
                                     <th>Fichiers</th>
                                     <th>Durée (s)</th>
                                     <th>Date</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="recent-jobs-table">
@@ -124,6 +125,31 @@
                                     <td>{{ job.file_count or 'N/A' }}</td>
                                     <td>{{ job.processing_time or 'N/A' }}</td>
                                     <td>{{ job.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <!-- Télécharger DOCX -->
+                                            {% if job.status == 'completed' %}
+                                                <a href="{{ url_for('download_job_file', job_id=job.job_id, file_type='docx') }}" class="btn btn-outline-primary" title="Télécharger DOCX">
+                                                    <i class="fas fa-file-word"></i>
+                                                </a>
+                                                <a href="{{ url_for('download_job_file', job_id=job.job_id, file_type='pdf') }}" class="btn btn-outline-danger" title="Télécharger PDF">
+                                                    <i class="fas fa-file-pdf"></i>
+                                                </a>
+                                            {% else %}
+                                                <button class="btn btn-outline-primary disabled" title="Fichier non disponible">
+                                                    <i class="fas fa-file-word"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger disabled" title="Fichier non disponible">
+                                                    <i class="fas fa-file-pdf"></i>
+                                                </button>
+                                            {% endif %}
+                                            <!-- Supprimer -->
+                                            <a href="{{ url_for('delete_job', job_id=job.id) }}" class="btn btn-outline-danger" 
+                                               onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce traitement?');" title="Supprimer">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                        </div>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
