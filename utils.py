@@ -704,22 +704,6 @@ def process_zip_file(zip_path, output_dir, status_dir=None, job_id=None):
                 "percent": 10
             })
             
-            # Importer Flask pour avoir accès à la base de données
-            if job_id:
-                try:
-                    from flask import current_app
-                    with current_app.app_context():
-                        # Importer le modèle de base de données
-                        from models import ProcessingJob, db
-                        
-                        # Mettre à jour le statut du job dans la base de données
-                        job = ProcessingJob.query.filter_by(job_id=job_id).first()
-                        if job:
-                            job.status = "processing"
-                            db.session.commit()
-                except ImportError:
-                    print("Impossible d'importer Flask pour mettre à jour la base de données")
-            
             # Étape 1: Extraire les fichiers .doc et .docx
             extracted_files = extract_doc_files(zip_path, extract_dir)
             file_count = len(extracted_files)
@@ -733,24 +717,6 @@ def process_zip_file(zip_path, output_dir, status_dir=None, job_id=None):
                     "status_text": error_msg,
                     "percent": 0
                 })
-                
-                # Mettre à jour le statut dans la base de données
-                if job_id:
-                    try:
-                        from flask import current_app
-                        with current_app.app_context():
-                            # Importer le modèle de base de données
-                            from models import ProcessingJob, db
-                            
-                            # Mettre à jour le statut du job dans la base de données
-                            job = ProcessingJob.query.filter_by(job_id=job_id).first()
-                            if job:
-                                job.status = "error"
-                                job.completed_at = datetime.utcnow()
-                                db.session.commit()
-                    except ImportError:
-                        pass
-                
                 return None
             
             # Mise à jour du statut avec le nombre de fichiers
@@ -811,21 +777,6 @@ def process_zip_file(zip_path, output_dir, status_dir=None, job_id=None):
                     "status_text": error_msg,
                     "percent": 0
                 })
-                
-                # Mettre à jour le statut dans la base de données
-                if job_id:
-                    try:
-                        from flask import current_app
-                        with current_app.app_context():
-                            from models import ProcessingJob, db
-                            job = ProcessingJob.query.filter_by(job_id=job_id).first()
-                            if job:
-                                job.status = "error"
-                                job.completed_at = datetime.utcnow()
-                                db.session.commit()
-                    except ImportError:
-                        pass
-                
                 return None
             
             # Étape 3: Fusionner tous les fichiers .docx
@@ -841,21 +792,6 @@ def process_zip_file(zip_path, output_dir, status_dir=None, job_id=None):
                     "status_text": error_msg,
                     "percent": 0
                 })
-                
-                # Mettre à jour le statut dans la base de données
-                if job_id:
-                    try:
-                        from flask import current_app
-                        with current_app.app_context():
-                            from models import ProcessingJob, db
-                            job = ProcessingJob.query.filter_by(job_id=job_id).first()
-                            if job:
-                                job.status = "error"
-                                job.completed_at = datetime.utcnow()
-                                db.session.commit()
-                    except ImportError:
-                        pass
-                
                 return None
             
             # Étape 4: Convertir le fichier fusionné en PDF
@@ -884,45 +820,6 @@ def process_zip_file(zip_path, output_dir, status_dir=None, job_id=None):
                 "percent": 100
             })
             
-            # Mettre à jour le statut dans la base de données
-            if job_id:
-                try:
-                    from flask import current_app
-                    with current_app.app_context():
-                        from models import ProcessingJob, UsageStat, db
-                        
-                        # Mettre à jour le job
-                        job = ProcessingJob.query.filter_by(job_id=job_id).first()
-                        if job:
-                            job.status = "completed"
-                            job.completed_at = datetime.utcnow()
-                            job.file_count = file_count
-                            job.processing_time = processing_time
-                            db.session.commit()
-                        
-                        # Mettre à jour les statistiques d'utilisation
-                        today = datetime.utcnow().date()
-                        stat = UsageStat.query.filter_by(date=today).first()
-                        
-                        if stat:
-                            stat.total_jobs += 1
-                            stat.total_files_processed += file_count
-                            stat.total_processing_time += processing_time
-                        else:
-                            new_stat = UsageStat(
-                                date=today,
-                                total_jobs=1,
-                                total_files_processed=file_count,
-                                total_processing_time=processing_time
-                            )
-                            db.session.add(new_stat)
-                        
-                        db.session.commit()
-                except ImportError:
-                    print("Impossible d'importer Flask pour mettre à jour la base de données")
-                except Exception as db_error:
-                    print(f"Erreur lors de la mise à jour de la base de données: {str(db_error)}")
-            
             return {
                 "job_dir": job_dir,
                 "docx_path": merged_docx,
@@ -943,22 +840,7 @@ def process_zip_file(zip_path, output_dir, status_dir=None, job_id=None):
                 "percent": 0
             })
             
-            # Mettre à jour le statut dans la base de données
-            if job_id:
-                try:
-                    from flask import current_app
-                    with current_app.app_context():
-                        from models import ProcessingJob, db
-                        job = ProcessingJob.query.filter_by(job_id=job_id).first()
-                        if job:
-                            job.status = "error"
-                            job.completed_at = datetime.utcnow()
-                            db.session.commit()
-                except ImportError:
-                    pass
-                except Exception as db_error:
-                    print(f"Erreur lors de la mise à jour de la base de données: {str(db_error)}")
-            
+            print(f"Erreur détectée: {error_msg}")
             return None
     
     # Démarrer le traitement dans un thread séparé
