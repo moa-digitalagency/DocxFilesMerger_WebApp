@@ -20,12 +20,11 @@
         
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="card-title"><i class="fas fa-file-medical me-2"></i>Traitement de Dossiers Médicaux</h5>
+                <h5 class="card-title"><i class="fas fa-file-medical me-2"></i>{{ translations.upload_title }}</h5>
             </div>
             <div class="card-body">
                 <p class="card-text">
-                    Cet outil traite une archive ZIP contenant des dossiers médicaux (fichiers .doc ou .docx),
-                    les fusionne en un seul document et le convertit en PDF.
+                    {{ translations.upload_subtitle }}
                 </p>
                 
                 <div class="alert alert-info">
@@ -60,10 +59,10 @@
                         <div class="file-icon">
                             <i class="fas fa-file-archive"></i>
                         </div>
-                        <p class="mb-2">Glissez et déposez votre fichier ZIP ici</p>
-                        <p class="text-muted">ou</p>
+                        <p class="mb-2">{{ translations.upload_subtitle }}</p>
+                        <p class="text-muted">{{ translations.or_text }}</p>
                         <button type="button" class="btn btn-secondary" onclick="document.getElementById('file-input').click()">
-                            <i class="fas fa-folder-open me-2"></i>Parcourir les fichiers
+                            <i class="fas fa-folder-open me-2"></i>{{ translations.browse_files }}
                         </button>
                         <input type="file" id="file-input" class="d-none" accept=".zip">
                     </div>
@@ -103,7 +102,7 @@
                     
                     <div class="text-center mt-3">
                         <button type="submit" id="upload-button" class="btn btn-primary btn-lg">
-                            <i class="fas fa-upload me-2"></i>Téléverser et Traiter
+                            <i class="fas fa-upload me-2"></i>{{ translations.processing }}
                         </button>
                     </div>
                 </form>

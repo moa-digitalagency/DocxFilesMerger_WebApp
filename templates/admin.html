@@ -46,6 +46,45 @@
         </div>
     </div>
 
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <button id="refresh-stats-btn" class="btn btn-success">
+                    <i class="fas fa-sync-alt me-2"></i> Actualiser les statistiques
+                </button>
+            </div>
+            <div>
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#clearHistoryModal">
+                    <i class="fas fa-trash-alt me-2"></i> Supprimer l'historique
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmation pour la suppression de l'historique -->
+    <div class="modal fade" id="clearHistoryModal" tabindex="-1" aria-labelledby="clearHistoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="clearHistoryModalLabel">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Confirmation de suppression
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Êtes-vous sûr de vouloir supprimer tout l'historique des traitements ?</p>
+                    <p class="text-danger"><strong>Attention :</strong> Cette action est irréversible.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <a href="/admin/clear_history" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-2"></i> Supprimer définitivement
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <!-- Traitements récents -->
         <div class="col-md-8">
@@ -66,7 +105,7 @@
                                     <th>Date</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="recent-jobs-table">
                                 {% for job in recent_jobs %}
                                 <tr>
                                     <td>{{ job.id }}</td>
@@ -92,7 +131,7 @@
                     </div>
                     
                     {% if not recent_jobs %}
-                    <p class="text-center text-muted py-3">Aucun traitement récent.</p>
+                    <p id="no-jobs-message" class="text-center text-muted py-3">Aucun traitement récent.</p>
                     {% endif %}
                 </div>
             </div>

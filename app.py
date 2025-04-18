@@ -10,15 +10,27 @@ import time
 import json
 import shutil
 import threading
+from functools import wraps
 from werkzeug.utils import secure_filename
-from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, abort
+from werkzeug.security import check_password_hash, generate_password_hash
+from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, abort, session
 from utils import process_zip_file, cleanup_old_files
 from models import db, ProcessingJob, UsageStat, Config
 from datetime import datetime
+from translations import get_translation, get_available_languages
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement
+load_dotenv()
 
 # Configuration de l'application
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev_key_for_docxfilesmerger")
+
+# Configuration de l'authentification admin
+ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'changez_ce_mot_de_passe')
+ADMIN_PASSWORD_HASH = generate_password_hash(ADMIN_PASSWORD)
 app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 500  # 500 MB
 app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')
 app.config['OUTPUT_FOLDER'] = os.path.join(os.getcwd(), 'outputs')
@@ -80,7 +92,23 @@ def index():
     cleanup_thread.daemon = True
     cleanup_thread.start()
     
-    return render_template('index.html')
+    # Récupérer la langue de l'utilisateur (par défaut: français)
+    lang = session.get('lang', 'fr')
+    
+    # Traduire les textes de l'interface
+    translations = {
+        'title': get_translation(lang, 'title'),
+        'upload_title': get_translation(lang, 'upload_title'),
+        'upload_subtitle': get_translation(lang, 'upload_subtitle'),
+        'or_text': get_translation(lang, 'or_text'),
+        'browse_files': get_translation(lang, 'browse_files'),
+        'processing': get_translation(lang, 'processing'),
+        'download_docx': get_translation(lang, 'download_docx'),
+        'download_pdf': get_translation(lang, 'download_pdf'),
+        'restart': get_translation(lang, 'restart')
+    }
+    
+    return render_template('index.html', translations=translations)
 
 # Route pour le téléversement du fichier
 @app.route('/upload', methods=['POST'])
@@ -318,6 +346,25 @@ def processing_status():
     except Exception as outer_e:
         return jsonify({'error': f'Erreur lors de la récupération du statut: {str(outer_e)}'})
 
+# Fonction pour vérifier si l'utilisateur est admin
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Vérifier si l'utilisateur est connecté en tant qu'admin
+        if not session.get('admin_logged_in'):
+            return redirect(url_for('admin_login', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# Route pour changer la langue
+@app.route('/change_language/<lang>')
+def change_language(lang):
+    # Stocker la langue sélectionnée dans la session
+    session['lang'] = lang
+    
+    # Rediriger vers la page précédente ou la page d'accueil
+    return redirect(request.referrer or url_for('index'))
+
 # Afficher le README
 @app.route('/readme')
 def show_readme():
@@ -328,8 +375,86 @@ def show_readme():
     # Pour l'instant, on redirige simplement vers la page d'accueil
     return redirect(url_for('index'))
 
+# Admin login
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    error = None
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        # Vérifier les identifiants
+        if username == ADMIN_USERNAME and check_password_hash(ADMIN_PASSWORD_HASH, password):
+            session['admin_logged_in'] = True
+            next_page = request.args.get('next')
+            if next_page and next_page.startswith('/'):
+                return redirect(next_page)
+            return redirect(url_for('admin_dashboard'))
+        else:
+            error = "Identifiants invalides"
+    
+    return render_template('admin_login.html', error=error)
+
+# Admin logout
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_logged_in', None)
+    return redirect(url_for('index'))
+
+# Route pour actualiser les statistiques admin
+@app.route('/admin/refresh_stats')
+@admin_required
+def admin_refresh_stats():
+    """Endpoint AJAX pour actualiser les statistiques de l'admin"""
+    try:
+        # Statistiques globales
+        total_jobs = ProcessingJob.query.count()
+        total_files = db.session.query(db.func.sum(ProcessingJob.file_count)).scalar() or 0
+        avg_time = db.session.query(db.func.avg(ProcessingJob.processing_time)).scalar() or 0
+        
+        # Jobs récents
+        recent_jobs = ProcessingJob.query.order_by(ProcessingJob.created_at.desc()).limit(10).all()
+        recent_jobs_data = [job.to_dict() for job in recent_jobs]
+        
+        # Statistiques quotidiennes
+        daily_stats = UsageStat.query.order_by(UsageStat.date.desc()).limit(7).all()
+        daily_stats_data = [{'date': stat.date.isoformat(), 
+                            'total_jobs': stat.total_jobs,
+                            'total_files_processed': stat.total_files_processed} 
+                           for stat in daily_stats]
+        
+        return jsonify({
+            'success': True,
+            'stats': {
+                'total_jobs': total_jobs,
+                'total_files': int(total_files),
+                'avg_time': int(avg_time)
+            },
+            'recent_jobs': recent_jobs_data,
+            'daily_stats': daily_stats_data
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# Route pour supprimer l'historique des traitements
+@app.route('/admin/clear_history')
+@admin_required
+def clear_history():
+    """Supprimer tout l'historique des traitements"""
+    try:
+        # Supprimer tous les jobs
+        ProcessingJob.query.delete()
+        db.session.commit()
+        
+        # Rediriger vers le tableau de bord admin
+        return redirect(url_for('admin_dashboard'))
+    except Exception as e:
+        return render_template('error.html', error_code=500, 
+                              error_message=f"Erreur lors de la suppression de l'historique: {str(e)}"), 500
+
 # Interface d'administration
 @app.route('/admin')
+@admin_required
 def admin_dashboard():
     """Page d'administration avec statistiques et configuration"""
     # Récupérer les statistiques globales
