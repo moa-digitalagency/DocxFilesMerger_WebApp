@@ -6,6 +6,12 @@
  */
 /* Custom CSS styles */
 
+/* Admin panel styles */
+.card .table {
+  --bs-table-color: white !important;
+  color: white !important;
+}
+
 .drop-zone {
     border: 2px dashed var(--bs-secondary);
     border-radius: 0.5rem;
