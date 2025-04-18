@@ -321,6 +321,26 @@ function checkProcessingStatus(fileCount) {
         });
 }
 
+// Messages motivants selon le pourcentage d'avancement
+const motivationalMessages = [
+    { min: 0, max: 20, message: "C'est parti ! 🚀" },
+    { min: 20, max: 40, message: "Bonne progression ! ⭐" },
+    { min: 40, max: 60, message: "Vous êtes sur la bonne voie ! 👍" },
+    { min: 60, max: 80, message: "Plus que quelques minutes... 🙌" },
+    { min: 80, max: 95, message: "On y est presque ! 🎯" },
+    { min: 95, max: 100, message: "Mission accomplie ! 🏆" }
+];
+
+// Obtenir un message motivant en fonction du pourcentage
+function getMotivationalMessage(percent) {
+    for (const item of motivationalMessages) {
+        if (percent >= item.min && percent <= item.max) {
+            return item.message;
+        }
+    }
+    return "";
+}
+
 function updateProgressUI(percent, statusText, step) {
     // Show progress container
     progressContainer.style.display = 'block';
@@ -331,6 +351,47 @@ function updateProgressUI(percent, statusText, step) {
     
     // Update text
     progressText.textContent = statusText;
+    
+    // Ajouter le pourcentage
+    if (progressPercent) {
+        progressPercent.textContent = `${Math.round(percent)}%`;
+    }
+    
+    // Ajouter un message motivant
+    const motivationMsg = getMotivationalMessage(percent);
+    if (motivationMsg && document.getElementById('motivation-message')) {
+        document.getElementById('motivation-message').textContent = motivationMsg;
+        document.getElementById('motivation-message').style.display = 'block';
+    }
+    
+    // Animer la mascotte en fonction du pourcentage
+    const mascot = document.getElementById('upload-mascot');
+    if (mascot) {
+        // Ajuster l'état de la mascotte en fonction de l'étape
+        if (step === 'error') {
+            mascot.src = '/static/img/mascot-sad.svg';
+            mascot.alt = "Mascotte triste";
+            mascot.classList.remove('jumping', 'dancing');
+            mascot.classList.add('shaking');
+        } else if (step === 'complete') {
+            mascot.src = '/static/img/mascot-happy.svg';
+            mascot.alt = "Mascotte heureuse";
+            mascot.classList.remove('shaking', 'jumping');
+            mascot.classList.add('dancing');
+        } else {
+            mascot.src = '/static/img/mascot-working.svg';
+            mascot.alt = "Mascotte au travail";
+            mascot.classList.remove('shaking', 'dancing');
+            mascot.classList.add('jumping');
+            
+            // Faire varier l'animation selon le pourcentage
+            const animationDuration = Math.max(0.5, 2 - (percent / 100) * 1.5); // Plus rapide quand on approche de 100%
+            mascot.style.animationDuration = `${animationDuration}s`;
+        }
+        
+        // Assurez-vous que la mascotte est visible
+        mascot.style.display = 'block';
+    }
     
     // Set appropriate classes based on step
     progressBar.className = 'progress-bar';

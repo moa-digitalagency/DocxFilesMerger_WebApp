@@ -214,26 +214,61 @@ def process_file():
 # Route pour télécharger les fichiers traités
 @app.route('/download/<file_type>')
 def download_file(file_type):
-    # Trouver le dossier de sortie le plus récent
-    output_folders = [os.path.join(app.config['OUTPUT_FOLDER'], f) for f in os.listdir(app.config['OUTPUT_FOLDER'])]
-    if not output_folders:
-        abort(404)
+    """Télécharger le fichier fusionné (docx ou pdf)"""
+    # Récupérer tous les dossiers dans le répertoire output
+    output_dirs = []
     
-    latest_folder = max(output_folders, key=os.path.getmtime)
+    try:
+        # Parcourir le répertoire de sortie de manière récursive
+        for root, dirs, files in os.walk(app.config['OUTPUT_FOLDER']):
+            # Chercher les fichiers merged.docx ou merged.pdf
+            if 'merged.docx' in files or 'merged.pdf' in files:
+                output_dirs.append(root)
+    except Exception as e:
+        print(f"Erreur lors de la recherche des dossiers de sortie: {str(e)}")
+        return render_template('error.html', error="Erreur système", 
+                              message="Impossible d'accéder aux fichiers de sortie.")
     
+    if not output_dirs:
+        print("Aucun fichier fusionné trouvé")
+        return render_template('error.html', error="Aucun fichier disponible", 
+                              message="Aucun fichier fusionné n'a été trouvé. Veuillez d'abord traiter un fichier ZIP.")
+    
+    # Trouver le dossier le plus récent
+    try:
+        latest_dir = max(output_dirs, key=os.path.getmtime)
+        print(f"Dossier le plus récent trouvé: {latest_dir}")
+    except Exception as e:
+        print(f"Erreur lors de la recherche du dossier le plus récent: {str(e)}")
+        return render_template('error.html', error="Erreur système", 
+                              message="Impossible de déterminer le dossier de sortie le plus récent.")
+    
+    # Déterminer le chemin du fichier à télécharger
     if file_type == 'docx':
-        file_path = os.path.join(latest_folder, 'merged.docx')
+        file_path = os.path.join(latest_dir, 'merged.docx')
         filename = 'documents_fusionnes.docx'
     elif file_type == 'pdf':
-        file_path = os.path.join(latest_folder, 'merged.pdf')
+        file_path = os.path.join(latest_dir, 'merged.pdf')
         filename = 'documents_fusionnes.pdf'
     else:
+        print(f"Type de fichier non reconnu: {file_type}")
         abort(404)
     
+    print(f"Tentative de téléchargement du fichier: {file_path}")
+    
+    # Vérifier si le fichier existe
     if not os.path.exists(file_path):
-        abort(404)
+        print(f"Fichier non trouvé: {file_path}")
+        return render_template('error.html', error="Fichier non trouvé", 
+                              message=f"Le fichier {file_type} demandé n'est pas disponible.")
     
-    return send_file(file_path, as_attachment=True, download_name=filename)
+    # Envoyer le fichier
+    try:
+        return send_file(file_path, as_attachment=True, download_name=filename)
+    except Exception as e:
+        print(f"Erreur lors de l'envoi du fichier: {str(e)}")
+        return render_template('error.html', error="Erreur de téléchargement", 
+                              message=f"Une erreur s'est produite lors du téléchargement: {str(e)}")
 
 # Route pour vérifier le statut du traitement
 @app.route('/status')
