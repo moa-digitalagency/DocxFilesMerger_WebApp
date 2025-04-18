@@ -691,6 +691,21 @@ def process_zip_file(zip_path, output_dir, status_dir=None, job_id=None):
     This function operates asynchronously and updates a status file.
     If job_id is provided, it will update the database with processing status.
     """
+    # Importer les modèles pour mettre à jour la base de données
+    # Importation locale pour éviter les dépendances circulaires
+    import sys
+    import os
+    from datetime import datetime
+    
+    # Vérifier si nous sommes dans un contexte Flask
+    flask_context = False
+    try:
+        from flask import current_app
+        if current_app:
+            flask_context = True
+    except (ImportError, RuntimeError):
+        pass
+    
     # Créer une fonction qui sera exécutée dans un thread séparé
     def process_thread():
         try:
@@ -826,6 +841,46 @@ def process_zip_file(zip_path, output_dir, status_dir=None, job_id=None):
                 "status_text": "Traitement terminé avec succès.",
                 "percent": 100
             })
+            
+            # Mettre à jour l'état du job dans la base de données
+            if job_id:
+                try:
+                    # Importation locale pour éviter les dépendances circulaires
+                    from models import db, ProcessingJob
+                    from flask import current_app
+                    
+                    with current_app.app_context():
+                        job = ProcessingJob.query.filter_by(job_id=job_id).first()
+                        if job:
+                            job.status = 'completed'
+                            job.completed_at = datetime.now()
+                            job.file_count = file_count
+                            job.processing_time = processing_time
+                            db.session.commit()
+                            print(f"Base de données mise à jour pour le job {job_id}: terminé.")
+                            
+                            # Mettre à jour les statistiques quotidiennes
+                            from models import UsageStat
+                            today = datetime.now().date()
+                            stat = UsageStat.query.filter_by(date=today).first()
+                            
+                            if stat:
+                                stat.total_jobs += 1
+                                stat.total_files_processed += file_count
+                                stat.total_processing_time += processing_time
+                            else:
+                                stat = UsageStat(
+                                    date=today,
+                                    total_jobs=1,
+                                    total_files_processed=file_count,
+                                    total_processing_time=processing_time
+                                )
+                                db.session.add(stat)
+                            
+                            db.session.commit()
+                            print(f"Statistiques d'utilisation mises à jour pour le {today}.")
+                except Exception as db_err:
+                    print(f"Erreur lors de la mise à jour de la base de données: {str(db_err)}")
             
             return {
                 "job_dir": job_dir,
