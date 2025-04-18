@@ -29,7 +29,17 @@ app.config['ALLOWED_EXTENSIONS'] = {'zip'}
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Initialiser la base de données
+# Initialiser la base de données avec des options de reconnexion
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
+    "pool_size": 10,
+    "max_overflow": 15,
+    "connect_args": {
+        "connect_timeout": 10,
+        "application_name": "DocxFilesMerger"
+    }
+}
 db.init_app(app)
 
 # Créer les dossiers nécessaires s'ils n'existent pas
@@ -38,7 +48,17 @@ for folder in [app.config['UPLOAD_FOLDER'], app.config['OUTPUT_FOLDER'], app.con
     
 # Création des tables de la base de données si elles n'existent pas
 with app.app_context():
-    db.create_all()
+    # Vérifier la connexion à la base de données
+    try:
+        # Test simple pour vérifier que la base est accessible
+        db.session.execute(db.text('SELECT 1'))
+        print("Database connection successful!")
+        
+        # Créer les tables
+        db.create_all()
+    except Exception as e:
+        print(f"Database connection error: {str(e)}")
+        print("The application will continue, but database operations may fail.")
 
 # Vérification des extensions de fichiers autorisées
 def allowed_file(filename):

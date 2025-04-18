@@ -629,14 +629,35 @@ def process_zip_file(zip_path, output_dir, status_dir=None, job_id=None):
                     app = Flask(__name__)
                     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
                     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+                    # Configuration pour éviter les problèmes de connexion
+                    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+                        "pool_pre_ping": True,
+                        "pool_recycle": 300,
+                        "pool_size": 5,
+                        "max_overflow": 10,
+                        "connect_args": {
+                            "connect_timeout": 15,
+                            "application_name": "DocxFilesMerger-ErrorHandler"
+                        }
+                    }
                     db.init_app(app)
                     
+                    # Mettre à jour l'état du job en une seule opération pour éviter les erreurs de connexion
                     with app.app_context():
-                        job = ProcessingJob.query.filter_by(job_id=job_id).first()
-                        if job:
-                            job.status = 'error'
-                            job.completed_at = datetime.now()
+                        try:
+                            # Utiliser une requête plus simple et robuste
+                            now = datetime.now()
+                            db.session.execute(
+                                db.text(
+                                    "UPDATE processing_jobs SET status = :status, completed_at = :completed_at WHERE job_id = :job_id"
+                                ),
+                                {"status": "error", "completed_at": now, "job_id": job_id}
+                            )
                             db.session.commit()
+                            print(f"Job {job_id} mis à jour avec le statut d'erreur")
+                        except Exception as sql_err:
+                            print(f"Erreur SQL lors de la mise à jour du statut: {str(sql_err)}")
+                            db.session.rollback()
                 except Exception as db_err:
                     print(f"Erreur lors de la mise à jour du statut d'erreur dans la base de données: {str(db_err)}")
     
