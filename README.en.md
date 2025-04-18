@@ -1,4 +1,6 @@
-# DocxFilesMerger
+# 📋 DocxFilesMerger 🏥
+
+*[Version française disponible ici](README.md)*
 
 ## Medical Document Processing Application
 

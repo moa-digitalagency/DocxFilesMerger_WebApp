@@ -1,5 +1,7 @@
 # 📋 DocxFilesMerger 🏥
 
+*[English version available here](README.en.md)*
+
 ## 🌟 Présentation
 
 Bienvenue dans l'application **DocxFilesMerger** ! 🎉
