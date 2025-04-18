@@ -62,7 +62,7 @@
                         </div>
                         <p class="mb-2">Glissez et déposez votre fichier ZIP ici</p>
                         <p class="text-muted">ou</p>
-                        <button type="button" class="btn btn-secondary">
+                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('file-input').click()">
                             <i class="fas fa-folder-open me-2"></i>Parcourir les fichiers
                         </button>
                         <input type="file" id="file-input" class="d-none" accept=".zip">
@@ -92,8 +92,8 @@
                         </div>
                     </div>
                     
-                    <div class="text-center">
-                        <button type="submit" id="upload-button" class="btn btn-primary" disabled>
+                    <div class="text-center mt-3">
+                        <button type="submit" id="upload-button" class="btn btn-primary btn-lg">
                             <i class="fas fa-upload me-2"></i>Téléverser et Traiter
                         </button>
                     </div>

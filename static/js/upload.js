@@ -1,16 +1,19 @@
 // UI Elements
-const dropZone = document.getElementById('drop-zone');
-const fileInput = document.getElementById('file-input');
-const uploadForm = document.getElementById('upload-form');
-const uploadButton = document.getElementById('upload-button');
-const progressContainer = document.getElementById('progress-container');
-const progressBar = document.getElementById('progress-bar');
-const progressText = document.getElementById('progress-text');
-const alertContainer = document.getElementById('alert-container');
-const resultsContainer = document.getElementById('results-container');
-const resetButton = document.getElementById('reset-button');
-const docxDownloadBtn = document.getElementById('docx-download');
-const pdfDownloadBtn = document.getElementById('pdf-download');
+let dropZone = document.getElementById('drop-zone');
+let fileInput = document.getElementById('file-input');
+let uploadForm = document.getElementById('upload-form');
+let uploadButton = document.getElementById('upload-button');
+let progressContainer = document.querySelector('.progress-container');
+let progressBar = document.getElementById('progress-bar');
+let progressText = document.getElementById('progress-status');
+let progressPercent = document.getElementById('progress-percentage');
+let alertContainer = document.getElementById('alert-container');
+let resultsContainer = document.getElementById('result-container');
+let resetButton = document.getElementById('reset-button');
+
+// Éléments de téléchargement qui seront créés dynamiquement
+let docxDownloadBtn = null;
+let pdfDownloadBtn = null;
 
 // Variables for tracking state
 let uploadStatus = 'idle'; // 'idle', 'uploading', 'processing', 'complete', 'error'
@@ -344,39 +347,54 @@ function updateProgressUI(percent, statusText, step) {
 }
 
 function showResults(data) {
-    // Enable download buttons if processing was successful
-    if (docxDownloadBtn && pdfDownloadBtn) {
-        docxDownloadBtn.classList.remove('disabled');
-        pdfDownloadBtn.classList.remove('disabled');
+    // Créer les boutons de téléchargement s'ils n'existent pas déjà
+    if (!docxDownloadBtn || !pdfDownloadBtn) {
+        // Vider le conteneur de résultats
+        resultsContainer.innerHTML = '';
         
-        // Add event listeners if not already added
-        if (!docxDownloadBtn.hasAttribute('data-listener')) {
-            docxDownloadBtn.addEventListener('click', () => {
-                window.location.href = '/download/docx';
-            });
-            docxDownloadBtn.setAttribute('data-listener', 'true');
-        }
+        // Créer une carte pour les résultats
+        const resultCard = document.createElement('div');
+        resultCard.className = 'card mb-4';
         
-        if (!pdfDownloadBtn.hasAttribute('data-listener')) {
-            pdfDownloadBtn.addEventListener('click', () => {
-                window.location.href = '/download/pdf';
-            });
-            pdfDownloadBtn.setAttribute('data-listener', 'true');
-        }
-    }
-    
-    // Display stats if available
-    if (data.stats) {
-        const statsHtml = `
-            <div class="alert alert-info">
-                <h5>Informations de traitement :</h5>
-                <ul>
-                    <li>Fichiers traités : ${data.file_count || data.stats.file_count || 'N/A'}</li>
-                    <li>Temps de traitement : ${data.stats.processing_time || 'N/A'} secondes</li>
-                </ul>
+        // Contenu de la carte
+        resultCard.innerHTML = `
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-check-circle me-2"></i>Traitement terminé avec succès</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h5>Informations de traitement :</h5>
+                    <ul>
+                        <li>Fichiers traités : ${data.file_count || (data.stats ? data.stats.file_count : 'N/A')}</li>
+                        <li>Temps de traitement : ${data.processing_time || (data.stats ? data.stats.processing_time : 'N/A')} secondes</li>
+                    </ul>
+                </div>
+                
+                <p>Vous pouvez maintenant télécharger le résultat dans les formats suivants :</p>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    <a href="/download/docx" class="btn btn-primary me-md-2" id="docx-download-btn">
+                        <i class="fas fa-file-word me-2"></i>Télécharger le DOCX
+                    </a>
+                    <a href="/download/pdf" class="btn btn-danger" id="pdf-download-btn">
+                        <i class="fas fa-file-pdf me-2"></i>Télécharger le PDF
+                    </a>
+                </div>
+                
+                <div class="d-grid gap-2 mt-3">
+                    <button class="btn btn-outline-secondary" onclick="resetApplication()">
+                        <i class="fas fa-redo me-2"></i>Traiter un autre fichier
+                    </button>
+                </div>
             </div>
         `;
-        resultsContainer.innerHTML = statsHtml + resultsContainer.innerHTML;
+        
+        // Ajouter la carte au conteneur
+        resultsContainer.appendChild(resultCard);
+        
+        // Mettre à jour les références des boutons
+        docxDownloadBtn = document.getElementById('docx-download-btn');
+        pdfDownloadBtn = document.getElementById('pdf-download-btn');
     }
 }
 
