@@ -697,14 +697,8 @@ def process_zip_file(zip_path, output_dir, status_dir=None, job_id=None):
     import os
     from datetime import datetime
     
-    # Vérifier si nous sommes dans un contexte Flask
-    flask_context = False
-    try:
-        from flask import current_app
-        if current_app:
-            flask_context = True
-    except (ImportError, RuntimeError):
-        pass
+    # On va utiliser directement l'application Flask importée
+    # (plus besoin de vérifier le contexte, on utilisera app.app_context() directement)
     
     # Créer une fonction qui sera exécutée dans un thread séparé
     def process_thread():
@@ -804,9 +798,9 @@ def process_zip_file(zip_path, output_dir, status_dir=None, job_id=None):
                 if job_id:
                     try:
                         from models import db, ProcessingJob
-                        from flask import current_app
+                        from app import app
                         
-                        with current_app.app_context():
+                        with app.app_context():
                             job = ProcessingJob.query.filter_by(job_id=job_id).first()
                             if job:
                                 job.status = 'error'
@@ -835,9 +829,9 @@ def process_zip_file(zip_path, output_dir, status_dir=None, job_id=None):
                 if job_id:
                     try:
                         from models import db, ProcessingJob
-                        from flask import current_app
+                        from app import app
                         
-                        with current_app.app_context():
+                        with app.app_context():
                             job = ProcessingJob.query.filter_by(job_id=job_id).first()
                             if job:
                                 job.status = 'error'
@@ -879,9 +873,10 @@ def process_zip_file(zip_path, output_dir, status_dir=None, job_id=None):
                 try:
                     # Importation locale pour éviter les dépendances circulaires
                     from models import db, ProcessingJob
-                    from flask import current_app
+                    from app import app
                     
-                    with current_app.app_context():
+                    # Créer l'application contexte ici plutôt que d'utiliser current_app
+                    with app.app_context():
                         job = ProcessingJob.query.filter_by(job_id=job_id).first()
                         if job:
                             job.status = 'completed'
@@ -939,9 +934,9 @@ def process_zip_file(zip_path, output_dir, status_dir=None, job_id=None):
                 try:
                     # Importation locale pour éviter les dépendances circulaires
                     from models import db, ProcessingJob
-                    from flask import current_app
+                    from app import app
                     
-                    with current_app.app_context():
+                    with app.app_context():
                         job = ProcessingJob.query.filter_by(job_id=job_id).first()
                         if job:
                             job.status = 'error'
