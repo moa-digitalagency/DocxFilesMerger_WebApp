@@ -81,9 +81,9 @@
                     </div>
                     
                     <div class="progress-container" style="display: none;">
-                        <!-- Mascotte animée centralisée -->
-                        <div class="d-flex justify-content-center align-items-center my-5 py-4">
-                            <div class="text-center">
+                        <!-- Mascotte animée centralisée absolument -->
+                        <div class="position-relative" style="height: 260px;">
+                            <div class="position-absolute top-50 start-50 translate-middle text-center w-100">
                                 <img id="upload-mascot" src="{{ url_for('static', filename='img/mascot-working.svg') }}" 
                                      alt="Mascotte au travail" style="width: 180px; height: 180px;" class="jumping">
                                 <div id="motivation-message" class="mt-3 fw-bold fs-4 text-center text-primary pulse" style="display: none;"></div>
