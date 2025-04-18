@@ -799,6 +799,22 @@ def process_zip_file(zip_path, output_dir, status_dir=None, job_id=None):
                     "status_text": error_msg,
                     "percent": 0
                 })
+                
+                # Mettre à jour le statut dans la base de données
+                if job_id:
+                    try:
+                        from models import db, ProcessingJob
+                        from flask import current_app
+                        
+                        with current_app.app_context():
+                            job = ProcessingJob.query.filter_by(job_id=job_id).first()
+                            if job:
+                                job.status = 'error'
+                                db.session.commit()
+                                print(f"Base de données mise à jour pour le job {job_id}: erreur (aucun fichier converti).")
+                    except Exception as db_err:
+                        print(f"Erreur lors de la mise à jour de la base de données: {str(db_err)}")
+                
                 return None
             
             # Étape 3: Fusionner tous les fichiers .docx
@@ -814,6 +830,22 @@ def process_zip_file(zip_path, output_dir, status_dir=None, job_id=None):
                     "status_text": error_msg,
                     "percent": 0
                 })
+                
+                # Mettre à jour le statut dans la base de données
+                if job_id:
+                    try:
+                        from models import db, ProcessingJob
+                        from flask import current_app
+                        
+                        with current_app.app_context():
+                            job = ProcessingJob.query.filter_by(job_id=job_id).first()
+                            if job:
+                                job.status = 'error'
+                                db.session.commit()
+                                print(f"Base de données mise à jour pour le job {job_id}: erreur (échec de fusion des documents).")
+                    except Exception as db_err:
+                        print(f"Erreur lors de la mise à jour de la base de données: {str(db_err)}")
+                
                 return None
             
             # Étape 4: Convertir le fichier fusionné en PDF
@@ -901,6 +933,22 @@ def process_zip_file(zip_path, output_dir, status_dir=None, job_id=None):
                 "status_text": error_msg,
                 "percent": 0
             })
+            
+            # Mettre à jour l'état du job en erreur dans la base de données
+            if job_id:
+                try:
+                    # Importation locale pour éviter les dépendances circulaires
+                    from models import db, ProcessingJob
+                    from flask import current_app
+                    
+                    with current_app.app_context():
+                        job = ProcessingJob.query.filter_by(job_id=job_id).first()
+                        if job:
+                            job.status = 'error'
+                            db.session.commit()
+                            print(f"Base de données mise à jour pour le job {job_id}: erreur.")
+                except Exception as db_err:
+                    print(f"Erreur lors de la mise à jour de la base de données (statut erreur): {str(db_err)}")
             
             print(f"Erreur détectée: {error_msg}")
             return None

@@ -13,7 +13,7 @@ import threading
 from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
-from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, abort, session
+from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, abort, session, flash
 from utils import process_zip_file, cleanup_old_files
 from models import db, ProcessingJob, UsageStat, Config
 from datetime import datetime
@@ -234,6 +234,7 @@ def process_file():
             if job:
                 job.status = 'error'
                 db.session.commit()
+                print(f"Statut du job {unique_id} mis à jour dans la base de données: erreur.")
         except Exception as db_err:
             print(f"Erreur lors de la mise à jour du statut dans la base de données: {str(db_err)}")
         
