@@ -116,14 +116,14 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Définir le contenu HTML de la ligne
             tr.innerHTML = `
-                <td>${job.id}</td>
-                <td class="text-truncate" style="max-width: 150px;">${job.original_filename || 'N/A'}</td>
+                <td class="text-white">${job.id}</td>
+                <td class="text-white text-truncate" style="max-width: 150px;">${job.original_filename || 'N/A'}</td>
                 <td>
                     <span class="badge ${badgeClass}">${statusText}</span>
                 </td>
-                <td>${job.file_count || 'N/A'}</td>
-                <td>${job.processing_time || 'N/A'}</td>
-                <td>${formattedDate}</td>
+                <td class="text-white">${job.file_count || 'N/A'}</td>
+                <td class="text-white">${job.processing_time || 'N/A'}</td>
+                <td class="text-white">${formattedDate}</td>
                 <td class="text-center">
                     <div class="btn-group btn-group-sm">
                         <!-- Télécharger DOCX -->

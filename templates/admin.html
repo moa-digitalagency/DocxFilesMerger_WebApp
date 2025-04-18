@@ -109,8 +109,8 @@
                             <tbody id="recent-jobs-table">
                                 {% for job in recent_jobs %}
                                 <tr>
-                                    <td>{{ job.id }}</td>
-                                    <td class="text-truncate" style="max-width: 150px;">{{ job.original_filename }}</td>
+                                    <td class="text-white">{{ job.id }}</td>
+                                    <td class="text-white text-truncate" style="max-width: 150px;">{{ job.original_filename }}</td>
                                     <td>
                                         {% if job.status == 'completed' %}
                                         <span class="badge bg-success">Terminé</span>
@@ -122,9 +122,9 @@
                                         <span class="badge bg-secondary">{{ job.status }}</span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ job.file_count or 'N/A' }}</td>
-                                    <td>{{ job.processing_time or 'N/A' }}</td>
-                                    <td>{{ job.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td class="text-white">{{ job.file_count or 'N/A' }}</td>
+                                    <td class="text-white">{{ job.processing_time or 'N/A' }}</td>
+                                    <td class="text-white">{{ job.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm">
                                             <!-- Télécharger DOCX -->
@@ -182,9 +182,9 @@
                             <tbody>
                                 {% for stat in daily_stats %}
                                 <tr>
-                                    <td>{{ stat.date.strftime('%d/%m/%Y') }}</td>
-                                    <td>{{ stat.total_jobs }}</td>
-                                    <td>{{ stat.total_files_processed }}</td>
+                                    <td class="text-white">{{ stat.date.strftime('%d/%m/%Y') }}</td>
+                                    <td class="text-white">{{ stat.total_jobs }}</td>
+                                    <td class="text-white">{{ stat.total_files_processed }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
