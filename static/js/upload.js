@@ -1,35 +1,22 @@
-/**
- * DocxFilesMerger - Application de traitement et fusion de documents.
- * Développé par MOA Digital Agency LLC (https://myoneart.com)
- * Email: moa@myoneart.com
- * Copyright © 2025 MOA Digital Agency LLC. Tous droits réservés.
- */
-// Global variables
-let uploadStatus = 'idle'; // idle, uploading, processing, complete, error
-let statusCheckInterval = null;
-
-// DOM elements
+// UI Elements
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
 const uploadForm = document.getElementById('upload-form');
+const uploadButton = document.getElementById('upload-button');
+const progressContainer = document.getElementById('progress-container');
 const progressBar = document.getElementById('progress-bar');
-const progressStatus = document.getElementById('progress-status');
-const uploadStep = document.getElementById('upload-step');
-const processStep = document.getElementById('process-step');
-const completeStep = document.getElementById('complete-step');
+const progressText = document.getElementById('progress-text');
 const alertContainer = document.getElementById('alert-container');
-const resultContainer = document.getElementById('result-container');
+const resultsContainer = document.getElementById('results-container');
+const resetButton = document.getElementById('reset-button');
+const docxDownloadBtn = document.getElementById('docx-download');
+const pdfDownloadBtn = document.getElementById('pdf-download');
 
-// Initialize the page
-document.addEventListener('DOMContentLoaded', function() {
-    // Set up the file drop zone
-    setupDropZone();
-    
-    // Set up the form submission
-    setupForm();
-});
+// Variables for tracking state
+let uploadStatus = 'idle'; // 'idle', 'uploading', 'processing', 'complete', 'error'
+let statusCheckInterval = null;
 
-// Set up the drag and drop functionality
+// Initialize the upload interface
 function setupDropZone() {
     // Prevent default drag behaviors
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -37,7 +24,7 @@ function setupDropZone() {
         document.body.addEventListener(eventName, preventDefaults, false);
     });
     
-    // Highlight drop zone when dragging over it
+    // Handle drag enter and leave
     ['dragenter', 'dragover'].forEach(eventName => {
         dropZone.addEventListener(eventName, highlight, false);
     });
@@ -49,69 +36,58 @@ function setupDropZone() {
     // Handle dropped files
     dropZone.addEventListener('drop', handleDrop, false);
     
-    // Handle click to select file
-    dropZone.addEventListener('click', function() {
-        fileInput.click();
+    // Handle manual file selection
+    fileInput.addEventListener('change', () => {
+        handleFiles(fileInput.files);
     });
     
-    // Handle file selection
-    fileInput.addEventListener('change', function() {
-        handleFiles(this.files);
-    });
+    // Reset button functionality
+    if (resetButton) {
+        resetButton.addEventListener('click', resetApplication);
+    }
 }
 
-// Set up the form submission
 function setupForm() {
-    uploadForm.addEventListener('submit', function(e) {
+    uploadForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        
         if (fileInput.files.length > 0) {
-            uploadFile(fileInput.files[0]);
+            handleFiles(fileInput.files);
         } else {
-            showAlert('Veuillez sélectionner un fichier ZIP à téléverser.', 'danger');
+            showAlert('Veuillez sélectionner un fichier ZIP à téléverser.', 'warning');
         }
     });
 }
 
-// Utility functions
 function preventDefaults(e) {
     e.preventDefault();
     e.stopPropagation();
 }
 
 function highlight() {
-    dropZone.classList.add('drag-over');
+    dropZone.classList.add('active');
 }
 
 function unhighlight() {
-    dropZone.classList.remove('drag-over');
+    dropZone.classList.remove('active');
 }
 
 function handleDrop(e) {
     const dt = e.dataTransfer;
     const files = dt.files;
-    
     handleFiles(files);
 }
 
 function handleFiles(files) {
-    if (files.length === 0) return;
-    
-    const file = files[0];
-    
-    // Check if it's a ZIP file
-    if (file.type !== 'application/zip' && !file.name.toLowerCase().endsWith('.zip')) {
-        showAlert('Veuillez téléverser un fichier ZIP.', 'danger');
-        return;
+    if (files.length > 0) {
+        const file = files[0];
+        
+        // Check if it's a ZIP file
+        if (file.type === 'application/zip' || file.name.toLowerCase().endsWith('.zip')) {
+            uploadFile(file);
+        } else {
+            showAlert('Veuillez téléverser un fichier ZIP valide.', 'danger');
+        }
     }
-    
-    // Update the file info in the UI
-    document.getElementById('file-name').textContent = file.name;
-    document.getElementById('file-size').textContent = formatFileSize(file.size);
-    document.getElementById('file-info').classList.remove('d-none');
-    
-    // Enable the upload button
-    document.getElementById('upload-button').disabled = false;
 }
 
 function formatFileSize(bytes) {
@@ -171,16 +147,17 @@ function uploadFile(file) {
         return response.json();
     })
     .then(data => {
-        // Upload successful, start processing
-        updateProgressUI(30, 'Téléversement terminé. Démarrage du traitement...', 'process');
-        
-        // Start processing the file
-        return startProcessing(data.zip_path, data.file_count);
+        if (data.success) {
+            updateProgressUI(20, 'Téléversement terminé. Démarrage du traitement...', 'upload_complete');
+            startProcessing(data.zip_path, data.file_count);
+        } else {
+            throw new Error(data.error || 'Échec du téléversement');
+        }
     })
     .catch(error => {
         uploadStatus = 'error';
-        updateProgressUI(0, '', 'error');
-        showAlert(`Erreur : ${error.message}`, 'danger');
+        updateProgressUI(0, 'Erreur lors du téléversement : ' + error.message, 'error');
+        console.error('Upload error:', error);
     });
 }
 
@@ -188,31 +165,36 @@ function startProcessing(zipPath, fileCount) {
     // Update status
     uploadStatus = 'processing';
     
-    // Request the server to process the file
+    // Send request to start processing
     fetch('/process', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ zip_path: zipPath })
+        body: JSON.stringify({
+            zip_path: zipPath
+        })
     })
     .then(response => {
         if (!response.ok) {
             return response.json().then(data => {
-                throw new Error(data.error || 'Échec du traitement');
+                throw new Error(data.error || 'Échec du démarrage du traitement');
             });
         }
         return response.json();
     })
     .then(data => {
-        // Start checking status
-        startStatusCheck(fileCount);
+        if (data.success) {
+            // Start checking status
+            startStatusCheck(fileCount);
+        } else {
+            throw new Error(data.error || 'Échec du démarrage du traitement');
+        }
     })
     .catch(error => {
         uploadStatus = 'error';
-        updateProgressUI(0, '', 'error');
-        showAlert(`Erreur : ${error.message}`, 'danger');
-        clearInterval(statusCheckInterval);
+        updateProgressUI(0, 'Erreur lors du démarrage du traitement : ' + error.message, 'error');
+        console.error('Processing error:', error);
     });
 }
 
@@ -234,6 +216,7 @@ function checkProcessingStatus(fileCount) {
             if (!response.ok) {
                 if (response.status === 404) {
                     // Status file not found, keep waiting
+                    console.log("Fichier de statut introuvable");
                     return null;
                 }
                 return response.json().then(data => {
@@ -245,231 +228,201 @@ function checkProcessingStatus(fileCount) {
         .then(data => {
             if (!data) return; // Status file not ready yet
             
-            // Update the UI based on status
-            switch (data.status) {
-                case 'starting':
-                case 'extracting':
-                    updateProgressUI(30, 'Extraction des fichiers de l\'archive ZIP...', 'process');
+            console.log("Réponse du statut:", data);
+            
+            // Vérifier si le traitement est terminé ou en erreur
+            if (data.complete === true) {
+                uploadStatus = 'complete';
+                updateProgressUI(100, 'Traitement terminé !', 'complete');
+                
+                // Stop the interval
+                if (statusCheckInterval) {
+                    clearInterval(statusCheckInterval);
+                    statusCheckInterval = null;
+                }
+                
+                // Display stats
+                showResults(data);
+                return;
+            }
+            
+            if (data.current_step === 'error') {
+                uploadStatus = 'error';
+                updateProgressUI(0, `Erreur lors du traitement : ${data.error || 'Erreur inconnue'}`, 'error');
+                
+                // Stop the interval
+                if (statusCheckInterval) {
+                    clearInterval(statusCheckInterval);
+                    statusCheckInterval = null;
+                }
+                return;
+            }
+            
+            // Mettre à jour l'UI en fonction de l'étape actuelle
+            if (data.percent !== undefined && data.status_text) {
+                updateProgressUI(data.percent, data.status_text, data.current_step);
+                return;
+            }
+            
+            // Format legacy - pour rétrocompatibilité
+            switch (data.current_step) {
+                case 'extract':
+                    updateProgressUI(10, 'Extraction des fichiers de l\'archive ZIP...', 'process');
                     break;
                     
-                case 'converting':
-                    const convertProgress = data.progress_percent || 35;
-                    updateProgressUI(convertProgress, `Conversion des fichiers (${data.converted || 0}/${data.total_files || fileCount})...`, 'process');
+                case 'convert':
+                    updateProgressUI(30, 'Conversion des fichiers...', 'process');
                     break;
                     
-                case 'processing':
-                    const processedPercent = data.progress_percent || 
-                                            (data.processed && data.total ? Math.round((data.processed / data.total) * 40) + 40 : 50);
-                    updateProgressUI(processedPercent, `Fusion des documents (${data.processed || 0}/${data.total || fileCount})...`, 'process');
+                case 'merge':
+                    updateProgressUI(50, 'Fusion des documents...', 'process');
                     break;
                     
-                case 'merging_complete':
-                    updateProgressUI(80, 'Fusion des fichiers terminée. Conversion en PDF...', 'process');
-                    break;
-                    
-                case 'converting_to_pdf':
-                    updateProgressUI(85, 'Conversion du document fusionné en PDF...', 'process');
-                    break;
-                    
-                case 'pdf_conversion_complete':
-                    updateProgressUI(95, 'Conversion PDF terminée. Finalisation...', 'process');
+                case 'pdf':
+                    updateProgressUI(80, 'Conversion du document en PDF...', 'process');
                     break;
                     
                 case 'complete':
                     uploadStatus = 'complete';
                     updateProgressUI(100, 'Traitement terminé !', 'complete');
-                    clearInterval(statusCheckInterval);
+                    
+                    // Stop the interval
+                    if (statusCheckInterval) {
+                        clearInterval(statusCheckInterval);
+                        statusCheckInterval = null;
+                    }
+                    
+                    // Display stats
                     showResults(data);
                     break;
                     
                 case 'error':
                     uploadStatus = 'error';
-                    updateProgressUI(0, '', 'error');
-                    showAlert(`Erreur : ${data.error || 'Une erreur inconnue est survenue'}`, 'danger');
-                    clearInterval(statusCheckInterval);
+                    updateProgressUI(0, `Erreur lors du traitement : ${data.error || 'Erreur inconnue'}`, 'error');
+                    
+                    // Stop the interval
+                    if (statusCheckInterval) {
+                        clearInterval(statusCheckInterval);
+                        statusCheckInterval = null;
+                    }
                     break;
                     
                 default:
-                    // Unknown status
-                    console.log('Statut inconnu :', data.status);
+                    // Unknown status, log it
+                    console.log("Statut inconnu :", data.current_step);
             }
         })
         .catch(error => {
-            console.error('Erreur lors de la vérification du statut :', error);
-            // Don't stop checking on a temporary error
+            console.error('Erreur lors de la vérification du statut:', error);
+            // On error, don't stop checking - might be a temporary issue
         });
 }
 
 function updateProgressUI(percent, statusText, step) {
+    // Show progress container
+    progressContainer.style.display = 'block';
+    
     // Update progress bar
     progressBar.style.width = `${percent}%`;
     progressBar.setAttribute('aria-valuenow', percent);
-    progressStatus.textContent = statusText;
     
-    // Update step indicators
-    uploadStep.classList.remove('step-active', 'step-complete');
-    processStep.classList.remove('step-active', 'step-complete');
-    completeStep.classList.remove('step-active', 'step-complete');
+    // Update text
+    progressText.textContent = statusText;
     
-    switch (step) {
-        case 'upload':
-            uploadStep.classList.add('step-active');
-            break;
-            
-        case 'process':
-            uploadStep.classList.add('step-complete');
-            processStep.classList.add('step-active');
-            break;
-            
-        case 'complete':
-            uploadStep.classList.add('step-complete');
-            processStep.classList.add('step-complete');
-            completeStep.classList.add('step-active', 'step-complete');
-            break;
-            
-        case 'error':
-            // Leave steps as is, just show error
-            break;
+    // Set appropriate classes based on step
+    progressBar.className = 'progress-bar';
+    
+    if (step === 'error') {
+        progressBar.classList.add('bg-danger');
+    } else if (step === 'complete') {
+        progressBar.classList.add('bg-success');
+        // Show the results section
+        resultsContainer.style.display = 'block';
+    } else {
+        progressBar.classList.add('bg-primary', 'progress-bar-striped', 'progress-bar-animated');
     }
 }
 
 function showResults(data) {
-    // Show success message
-    showAlert('Les fichiers ont été traités avec succès !', 'success');
+    // Enable download buttons if processing was successful
+    if (docxDownloadBtn && pdfDownloadBtn) {
+        docxDownloadBtn.classList.remove('disabled');
+        pdfDownloadBtn.classList.remove('disabled');
+        
+        // Add event listeners if not already added
+        if (!docxDownloadBtn.hasAttribute('data-listener')) {
+            docxDownloadBtn.addEventListener('click', () => {
+                window.location.href = '/download/docx';
+            });
+            docxDownloadBtn.setAttribute('data-listener', 'true');
+        }
+        
+        if (!pdfDownloadBtn.hasAttribute('data-listener')) {
+            pdfDownloadBtn.addEventListener('click', () => {
+                window.location.href = '/download/pdf';
+            });
+            pdfDownloadBtn.setAttribute('data-listener', 'true');
+        }
+    }
     
-    // Create the result card
-    resultContainer.innerHTML = `
-        <div class="card success-card">
-            <div class="card-header">
-                <h5 class="card-title"><i class="fas fa-check-circle text-success me-2"></i>Traitement Terminé</h5>
+    // Display stats if available
+    if (data.stats) {
+        const statsHtml = `
+            <div class="alert alert-info">
+                <h5>Informations de traitement :</h5>
+                <ul>
+                    <li>Fichiers traités : ${data.file_count || data.stats.file_count || 'N/A'}</li>
+                    <li>Temps de traitement : ${data.stats.processing_time || 'N/A'} secondes</li>
+                </ul>
             </div>
-            <div class="card-body">
-                <p>Vos fichiers ont été traités avec succès.</p>
-                
-                <div class="result-stats mb-3">
-                    <div class="row">
-                        <div class="col">
-                            <div class="d-flex align-items-center">
-                                <div class="me-3">
-                                    <i class="fas fa-file-alt fa-2x text-success"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-bold">Fichiers Traités</div>
-                                    <div>${data.processed_files || 0}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="d-flex align-items-center">
-                                <div class="me-3">
-                                    <i class="fas fa-exclamation-triangle fa-2x ${data.failed_files > 0 ? 'text-warning' : 'text-secondary'}"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-bold">Fichiers Échoués</div>
-                                    <div>${data.failed_files || 0}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                ${data.failed_files > 0 ? `
-                <div class="alert alert-warning">
-                    <strong>Remarque :</strong> Certains fichiers n'ont pas pu être traités. Ils ont été ignorés dans le document fusionné.
-                    <div class="mt-2">
-                        <button class="btn btn-sm btn-outline-warning" type="button" data-bs-toggle="collapse" data-bs-target="#failedFilesList">
-                            Afficher les fichiers échoués
-                        </button>
-                    </div>
-                    <div class="collapse mt-2" id="failedFilesList">
-                        <div class="card card-body failed-files-container">
-                            <ul class="list-group list-group-flush">
-                                ${data.failed_file_names?.map(file => `<li class="list-group-item">${file}</li>`).join('') || ''}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                ` : ''}
-                
-                <div class="row mt-4">
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-body text-center">
-                                <i class="fas fa-file-word fa-3x text-primary mb-3"></i>
-                                <h5 class="card-title">DOCX Fusionné</h5>
-                                <p class="card-text">Téléchargez le document Word fusionné</p>
-                                <a href="/download/docx" class="btn btn-primary download-button">
-                                    <i class="fas fa-download me-2"></i>Télécharger DOCX
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-body text-center">
-                                <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
-                                <h5 class="card-title">PDF Fusionné</h5>
-                                <p class="card-text">Téléchargez le document PDF converti</p>
-                                <a href="/download/pdf" class="btn btn-danger download-button" ${!data.pdf_conversion_success ? 'disabled' : ''}>
-                                    <i class="fas fa-download me-2"></i>Télécharger PDF
-                                </a>
-                                ${!data.pdf_conversion_success ? '<p class="text-muted mt-2 small">La conversion PDF n\'était pas disponible</p>' : ''}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="text-center mt-4">
-                    <button id="reset-button" class="btn btn-secondary">
-                        <i class="fas fa-redo me-2"></i>Traiter un autre fichier
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Scroll to the results
-    resultContainer.scrollIntoView({ behavior: 'smooth' });
-    
-    // Add event listener for the reset button
-    document.getElementById('reset-button').addEventListener('click', resetApplication);
+        `;
+        resultsContainer.innerHTML = statsHtml + resultsContainer.innerHTML;
+    }
 }
 
 function resetApplication() {
-    // Reset the form
-    uploadForm.reset();
-    
-    // Clear file info
-    document.getElementById('file-info').classList.add('d-none');
-    
-    // Reset progress
-    progressBar.style.width = '0%';
-    progressBar.setAttribute('aria-valuenow', 0);
-    progressStatus.textContent = '';
-    
-    // Reset steps
-    uploadStep.classList.remove('step-active', 'step-complete');
-    processStep.classList.remove('step-active', 'step-complete');
-    completeStep.classList.remove('step-active', 'step-complete');
-    
-    // Clear results
-    resultContainer.innerHTML = '';
-    
-    // Reset status
+    // Reset UI state
     uploadStatus = 'idle';
     
-    // Clear any intervals
+    // Clear any ongoing status check
     if (statusCheckInterval) {
         clearInterval(statusCheckInterval);
         statusCheckInterval = null;
     }
     
-    // Disable upload button
-    document.getElementById('upload-button').disabled = true;
+    // Reset file input
+    if (fileInput) {
+        fileInput.value = '';
+    }
     
-    // Show message
-    showAlert('Prêt pour un nouveau traitement.', 'info');
+    // Hide progress and results
+    progressContainer.style.display = 'none';
+    resultsContainer.style.display = 'none';
     
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Clear alerts
+    alertContainer.innerHTML = '';
+    
+    // Reset progress bar
+    progressBar.style.width = '0%';
+    progressBar.setAttribute('aria-valuenow', 0);
+    progressBar.className = 'progress-bar';
+    
+    // Disable download buttons
+    if (docxDownloadBtn && pdfDownloadBtn) {
+        docxDownloadBtn.classList.add('disabled');
+        pdfDownloadBtn.classList.add('disabled');
+    }
+    
+    // Reset results container content (but keep the download buttons)
+    const downloadButtons = resultsContainer.querySelector('.btn-group');
+    if (downloadButtons) {
+        resultsContainer.innerHTML = '';
+        resultsContainer.appendChild(downloadButtons);
+    }
 }
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', function() {
+    setupDropZone();
+    setupForm();
+});
