@@ -110,6 +110,7 @@ Pour des instructions complètes sur le déploiement, voir notre documentation d
 | <kbd>Ctrl</kbd> + <kbd>D</kbd> | Télécharger le document DOCX |
 | <kbd>Ctrl</kbd> + <kbd>P</kbd> | Télécharger le document PDF |
 | <kbd>Ctrl</kbd> + <kbd>R</kbd> | Réinitialiser l'application |
+| <kbd>Ctrl</kbd> + <kbd>H</kbd> | Afficher l'aide des raccourcis |
 
 ## 📋 Prérequis
 
